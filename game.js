@@ -1,38 +1,49 @@
-
-const zones = [
-  {id:'laptops',name:'Laptops y tablets',code:'TEC-01',stock:12,icon:'▰'},
-  {id:'audio',name:'Audio',code:'TEC-02',stock:18,icon:'●'},
-  {id:'celulares',name:'Celulares',code:'TEC-03',stock:24,icon:'▯'},
-  {id:'gaming',name:'Gaming',code:'TEC-04',stock:15,icon:'◆'},
-  {id:'tv',name:'TV y video',code:'TEC-05',stock:9,icon:'▰'},
-  {id:'hogar',name:'Electrohogar',code:'TEC-06',stock:21,icon:'◒'},
-  {id:'accesorios',name:'Accesorios',code:'TEC-07',stock:32,icon:'⌁'},
-  {id:'almacen',name:'Almacén',code:'ALM-01',stock:27,icon:'▣'}
+const AREAS=[
+  {id:'audio',name:'Audio',icon:'♫',color:'#ff7548',items:86,tasks:['Audífonos y TWS','Parlantes portátiles','Audio profesional','Cables de audio']},
+  {id:'computo',name:'Cómputo',icon:'▰',color:'#72a7ff',items:104,tasks:['Laptops exhibición','Monitores','Periféricos','Componentes']},
+  {id:'soho',name:'SOHO',icon:'⌂',color:'#b18cff',items:72,tasks:['Impresoras','Suministros','Redes y routers','Oficina en casa']},
+  {id:'baterias',name:'Baterías',icon:'▣',color:'#d2f238',items:128,tasks:['Pilas alcalinas','Recargables','Power banks','Cargadores']},
+  {id:'celulares',name:'Celulares',icon:'▯',color:'#4ed6af',items:94,tasks:['Smartphones','Fundas','Protectores','Cargadores móviles']},
+  {id:'gaming',name:'Gaming',icon:'◆',color:'#ff5e8a',items:78,tasks:['Consolas','Mandos','Accesorios gamer','Videojuegos']}
 ];
-const zonePositions={laptops:[2,1],audio:[4,1],celulares:[2,3],gaming:[4,3],tv:[1,5],hogar:[3,5],accesorios:[5,5],almacen:[6,2]};
-const state={x:0,y:4,counts:{},sound:true};
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const player=$('#player'), dialog=$('#countDialog'), input=$('#countInput'); let activeZone=null;
+const SKILLS=[
+  {id:'speed',name:'Velocidad',icon:'⚡',desc:'Menos tiempo por producto'},
+  {id:'accuracy',name:'Precisión',icon:'◎',desc:'Reduce errores de conteo'},
+  {id:'focus',name:'Concentración',icon:'◉',desc:'Detecta más diferencias'}
+];
+const state={area:null,skills:{speed:0,accuracy:0,focus:0},points:5,running:false,progress:0,counted:0,findings:0,task:0,boost:false,timer:null};
+const $=s=>document.querySelector(s);
 
-function renderList(){
-  $('#zoneList').innerHTML=zones.map((z,i)=>{const done=state.counts[z.id]!==undefined,diff=done&&state.counts[z.id]!==z.stock;return `<div class="zone-row ${done?'done':''} ${diff?'diff':''}"><span class="num">${done?'✓':String(i+1).padStart(2,'0')}</span><div><strong>${z.name}</strong><small>${z.code}${done?` · ${state.counts[z.id]} unidades`:''}</small></div><span class="status">${done?(diff?'DIFERENCIA':'CORRECTO'):'PENDIENTE'}</span></div>`}).join('');
-  const completed=Object.keys(state.counts).length,total=Object.values(state.counts).reduce((a,b)=>a+b,0),diffs=zones.filter(z=>state.counts[z.id]!==undefined&&state.counts[z.id]!==z.stock).length;
-  $('#zoneCount').textContent=`${completed}/8`; $('#progressText').textContent=`${completed} / 8 zonas`; $('#progressBar').style.width=`${completed/8*100}%`; $('#scanned').textContent=total; $('#differences').textContent=diffs;
-  $('#accuracy').textContent=completed?`${Math.round((completed-diffs)/completed*100)}%`:'—'; $('#finishBtn').disabled=completed<8;
-  $$('.zone').forEach(el=>el.classList.toggle('done',state.counts[el.dataset.zone]!==undefined));
+function renderAreas(){
+  $('#areas').innerHTML=AREAS.map(a=>`<button class="area ${state.area?.id===a.id?'selected':''}" data-id="${a.id}" style="--area:${a.color}"><i>${a.icon}</i><span>${a.name}<small>${a.items} SKUs</small></span><b>✓</b></button>`).join('');
+  document.querySelectorAll('.area').forEach(btn=>btn.onclick=()=>{state.area=AREAS.find(a=>a.id===btn.dataset.id);renderAreas();updateStart()});
 }
-function nearby(){
-  let nearest=null,dist=99; for(const [id,[x,y]] of Object.entries(zonePositions)){const d=Math.abs(x-state.x)+Math.abs(y-state.y);if(d<dist){dist=d;nearest=id}}
-  $$('.zone').forEach(el=>el.classList.toggle('near',el.dataset.zone===nearest&&dist<=1&&!el.classList.contains('done'))); return dist<=1?nearest:null;
+function renderSkills(){
+  $('#skills').innerHTML=SKILLS.map(s=>`<div class="skill"><i>${s.icon}</i><div><b>${s.name}</b><small>${s.desc}</small></div><button data-id="${s.id}" data-delta="-1" ${state.skills[s.id]===0?'disabled':''}>−</button><strong>${state.skills[s.id]}</strong><button data-id="${s.id}" data-delta="1" ${state.points===0?'disabled':''}>+</button></div>`).join('');
+  $('#points').textContent=state.points;
+  document.querySelectorAll('.skill button').forEach(btn=>btn.onclick=()=>{const d=Number(btn.dataset.delta),id=btn.dataset.id;if(d>0&&state.points>0){state.skills[id]++;state.points--}if(d<0&&state.skills[id]>0){state.skills[id]--;state.points++}renderSkills();updateStart()});
 }
-function move(dx,dy){state.x=Math.max(0,Math.min(6,state.x+dx));state.y=Math.max(0,Math.min(6,state.y+dy));player.style.setProperty('--x',state.x);player.style.setProperty('--y',state.y);nearby()}
-function interact(){const id=nearby();if(!id){toast('Acércate a una zona pendiente');return} openCount(id)}
-function openCount(id){activeZone=zones.find(z=>z.id===id);$('#dialogTitle').textContent=activeZone.name;$('#dialogCode').textContent=activeZone.code;$('#systemStock').textContent=`${activeZone.stock} und.`;$('#productIcons').textContent=activeZone.icon.repeat(4);input.value='';dialog.showModal();setTimeout(()=>input.focus(),100)}
-function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),1800)}
-document.addEventListener('keydown',e=>{if(dialog.open)return; const k=e.key.toLowerCase();if(['w','arrowup'].includes(k))move(0,-1);if(['s','arrowdown'].includes(k))move(0,1);if(['a','arrowleft'].includes(k))move(-1,0);if(['d','arrowright'].includes(k))move(1,0);if(k==='e'||k===' ')interact()});
-$$('.zone').forEach(el=>el.addEventListener('click',()=>{if(el.classList.contains('near'))openCount(el.dataset.zone)}));
-$('#countForm').addEventListener('submit',e=>{if(e.submitter?.value==='cancel')return; e.preventDefault();if(input.value==='')return;state.counts[activeZone.id]=Number(input.value);dialog.close();renderList();nearby();toast(state.counts[activeZone.id]===activeZone.stock?'Conteo correcto registrado':'Diferencia registrada para revisión')});
-$('#finishBtn').addEventListener('click',()=>{const diffs=zones.filter(z=>state.counts[z.id]!==z.stock),total=Object.values(state.counts).reduce((a,b)=>a+b,0),acc=Math.round((8-diffs.length)/8*100);$('#resultContent').innerHTML=`<small>INVENTARIO COMPLETADO</small><h2>Buen trabajo, auditor</h2><div class="big">${acc}%</div><p>${total} unidades contadas · ${diffs.length} diferencias detectadas</p><p>${diffs.length?'Las diferencias quedaron marcadas para un segundo conteo.':'El inventario coincide completamente con el sistema.'}</p><button onclick="location.reload()">NUEVA JORNADA</button>`;$('#resultDialog').showModal()});
-$('#soundBtn').addEventListener('click',e=>{state.sound=!state.sound;e.currentTarget.textContent=state.sound?'♪':'×'});
-setInterval(()=>{const d=new Date();$('#clock').textContent=d.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})},1000);
-renderList();nearby();setTimeout(()=>$('#toast').classList.add('show'),500);setTimeout(()=>$('#toast').classList.remove('show'),3500);
+function updateStart(){const ready=state.area&&state.points===0;$('#startBtn').disabled=!ready;$('#startBtn').textContent=ready?'INICIAR INVENTARIO  →':state.area?'DISTRIBUYE LOS 5 PUNTOS':'SELECCIONA UN ÁREA'}
+function renderTasks(){
+  $('#tasks').innerHTML=state.area.tasks.map((t,i)=>`<div class="task ${i<state.task?'done':i===state.task?'active':''}"><span>${i<state.task?'✓':String(i+1).padStart(2,'0')}</span><div><b>${t}</b><small>${i<state.task?'Conteo completado':i===state.task?'Contando productos…':'Pendiente'}</small></div>${i===state.task?'<i></i>':''}</div>`).join('');
+}
+function start(){
+  state.running=true;$('#setupPanel').classList.add('hidden');$('#runPanel').classList.remove('hidden');$('#areaBadge').textContent=state.area.name.toUpperCase();$('#areaBadge').style.background=state.area.color;$('#routeTitle').textContent=state.area.name;$('#statusLabel').textContent='AUDITOR TRABAJANDO';$('#statusDot').classList.add('on');$('#workerTag').textContent='CONTANDO';updateETA();renderTasks();tick();
+}
+function tick(){
+  clearTimeout(state.timer);if(!state.running)return;
+  const speed=(.32+state.skills.speed*.085)*(state.boost?2.2:1),previous=state.progress;state.progress=Math.min(100,state.progress+speed);
+  state.counted=Math.min(state.area.items,Math.floor(state.area.items*state.progress/100));
+  const nextTask=Math.min(3,Math.floor(state.progress/25));if(nextTask!==state.task){state.task=nextTask;renderTasks()}
+  const findChance=(.004+state.skills.focus*.003)*(state.boost?.75:1);if(Math.random()<findChance&&state.findings<5)state.findings++;
+  const names=state.area.tasks;$('#currentTask').textContent=`${names[state.task]} · ${state.counted}/${state.area.items}`;$('#progressText').textContent=`${Math.floor(state.progress)}%`;$('#progressBar').style.width=`${state.progress}%`;$('#counted').textContent=state.counted;$('#findings').textContent=state.findings;
+  const worker=$('#worker'),phase=(state.progress%25)/25;worker.style.setProperty('--walk',`${12+phase*65}%`);worker.style.setProperty('--lane',`${20+(state.task%2)*30}%`);$('#scanWave').style.left=`${22+phase*55}%`;
+  if(state.progress>=100){finish();return}state.timer=setTimeout(tick,110);
+}
+function updateETA(){const secs=Math.ceil((100-state.progress)/(.32+state.skills.speed*.085)*.11);$('#eta').textContent=`${Math.max(1,Math.ceil(secs/60))} MIN`}
+function finish(){state.running=false;$('#workerTag').textContent='LISTO';$('#statusLabel').textContent='INVENTARIO COMPLETADO';$('#currentTask').textContent='Área verificada';state.task=4;renderTasks();const accuracy=Math.min(100,90+state.skills.accuracy*2-Math.floor(Math.random()*3));$('#score').textContent=`${accuracy}%`;$('#resultTitle').textContent=`${state.area.name} completado`;$('#resultCopy').textContent=`${state.counted} unidades verificadas y ${state.findings} diferencias enviadas a revisión.`;setTimeout(()=>$('#resultDialog').showModal(),500)}
+$('#startBtn').onclick=start;
+$('#stopBtn').onclick=()=>{if(confirm('¿Cancelar esta jornada de inventario?'))location.reload()};
+$('#boostBtn').onclick=()=>{if(state.boost)return;state.boost=true;$('#boostBtn').classList.add('used');$('#boostText').textContent='Impulso activo';setTimeout(()=>{state.boost=false;$('#boostText').textContent='Impulso utilizado'},8000)};
+setInterval(()=>{$('#clock').textContent=new Date().toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})},1000);
+renderAreas();renderSkills();updateStart();
