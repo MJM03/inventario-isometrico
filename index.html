@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventario — Simulador isométrico</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">I/</span><span>INVENTARIO</span></div>
+      <div class="shift"><span class="pulse"></span> TURNO ACTIVO <b id="clock">08:42</b></div>
+      <div class="progress"><span>PROGRESO DE TIENDA</span><b id="progressText">0 / 8 zonas</b><div class="bar"><i id="progressBar"></i></div></div>
+      <button id="soundBtn" class="icon-btn" aria-label="Sonido">♪</button>
+    </header>
+
+    <main>
+      <section class="world-wrap">
+        <div class="store-label"><small>SEDE 01 · MIRAFLORES</small><strong>VOLT<span>BOX</span></strong></div>
+        <div id="toast" class="toast">Usa WASD o las flechas para moverte</div>
+        <div id="world" class="world" aria-label="Tienda isométrica">
+          <div class="floor"></div>
+          <div class="wall wall-left"></div><div class="wall wall-right"></div>
+          <div class="counter object" style="--x:0;--y:1"><span>CAJA</span></div>
+          <div class="shelf object zone" data-zone="laptops" style="--x:2;--y:1"><div>▰ ▰ ▰</div><span>LAPTOPS</span></div>
+          <div class="shelf object zone" data-zone="audio" style="--x:4;--y:1"><div>● ● ●</div><span>AUDIO</span></div>
+          <div class="shelf object zone" data-zone="celulares" style="--x:2;--y:3"><div>▯ ▯ ▯</div><span>CELULARES</span></div>
+          <div class="shelf object zone" data-zone="gaming" style="--x:4;--y:3"><div>◆ ◆ ◆</div><span>GAMING</span></div>
+          <div class="shelf object zone" data-zone="tv" style="--x:1;--y:5"><div>▰ ▰</div><span>TV & VIDEO</span></div>
+          <div class="shelf object zone" data-zone="hogar" style="--x:3;--y:5"><div>◒ ◒ ◒</div><span>HOGAR</span></div>
+          <div class="shelf object zone" data-zone="accesorios" style="--x:5;--y:5"><div>⌁ ⌁ ⌁</div><span>ACCESORIOS</span></div>
+          <div class="box-pile object zone" data-zone="almacen" style="--x:6;--y:2"><i></i><i></i><i></i><span>ALMACÉN</span></div>
+          <div id="player" class="player" style="--x:0;--y:4"><div class="shadow"></div><div class="body"><i></i></div><span>MARCO</span></div>
+        </div>
+        <div class="controls"><b>MOVER</b><span>WASD / ↑↓←→</span><b>INTERACTUAR</b><span>E / ESPACIO</span></div>
+      </section>
+
+      <aside class="panel">
+        <div class="mission-head"><small>MISIÓN ACTUAL</small><span class="tag">DÍA 1</span><h1>Conteo general</h1><p>Verifica el stock físico de todas las zonas antes de la apertura.</p></div>
+        <div class="stats"><div><b id="scanned">0</b><span>UNIDADES</span></div><div><b id="accuracy">—</b><span>PRECISIÓN</span></div><div><b id="differences">0</b><span>DIFERENCIAS</span></div></div>
+        <div class="section-title"><span>ZONAS DE CONTEO</span><b id="zoneCount">0/8</b></div>
+        <div id="zoneList" class="zone-list"></div>
+        <div class="tip"><span>!</span><p><b>Consejo de auditoría</b>Acércate a una zona resaltada y pulsa <kbd>E</kbd>. Registra el conteo físico y compara contra el sistema.</p></div>
+        <button id="finishBtn" class="finish" disabled>FINALIZAR INVENTARIO <span>→</span></button>
+      </aside>
+    </main>
+  </div>
+
+  <dialog id="countDialog">
+    <form method="dialog" id="countForm">
+      <button class="close" value="cancel" aria-label="Cerrar">×</button>
+      <small>ESCÁNER · <span id="dialogCode"></span></small>
+      <h2 id="dialogTitle">Zona</h2>
+      <p>Cuenta todas las unidades visibles en esta zona.</p>
+      <div class="scanner"><span></span><div id="productIcons"></div></div>
+      <label>CONTEO FÍSICO<input id="countInput" type="number" min="0" required autocomplete="off" /></label>
+      <div class="system-stock">Stock según sistema <b id="systemStock">0 und.</b></div>
+      <button class="confirm" value="default">REGISTRAR CONTEO</button>
+    </form>
+  </dialog>
+
+  <dialog id="resultDialog" class="result-dialog"><div id="resultContent"></div></dialog>
+  <script src="game.js"></script>
+</body>
+</html>
