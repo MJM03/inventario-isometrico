@@ -18,25 +18,28 @@
 
     <main>
       <section class="scene-card">
+        <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
         <div class="store-title"><small>SEDE MIRAFLORES · TURNO MAÑANA</small><b>VOLT<span>BOX</span></b></div>
         <div class="world" id="world">
           <div class="floor"></div>
-          <div class="aisle a1"><i></i><i></i><span>01</span></div>
-          <div class="aisle a2"><i></i><i></i><span>02</span></div>
-          <div class="aisle a3"><i></i><i></i><span>03</span></div>
+          <div class="back-wall"><i></i><b>TECH STORE</b></div>
+          <div class="ceiling-light l1"></div><div class="ceiling-light l2"></div>
+          <div class="aisle a1"><div class="products"><i></i><i></i><i></i><i></i></div><span>01</span></div>
+          <div class="aisle a2"><div class="products"><i></i><i></i><i></i><i></i></div><span>02</span></div>
+          <div class="aisle a3"><div class="products"><i></i><i></i><i></i><i></i></div><span>03</span></div>
           <div class="desk"><span>CONTROL</span></div>
           <div class="worker" id="worker"><div class="worker-shadow"></div><div class="worker-body"><i></i></div><em id="workerTag">LISTO</em></div>
           <div class="scan-wave" id="scanWave"></div>
         </div>
-        <div class="live-status">
+        <div class="live-status glass">
           <span class="status-dot" id="statusDot"></span>
           <div><small id="statusLabel">ESPERANDO ASIGNACIÓN</small><b id="currentTask">Configura al auditor</b></div>
-          <strong id="areaBadge">—</strong>
+          <strong id="areaBadge"><i></i>—</strong>
         </div>
       </section>
 
       <section class="dashboard">
-        <div class="metrics">
+        <div class="metrics glass">
           <div><small>PROGRESO</small><b id="progressText">0%</b><span><i id="progressBar"></i></span></div>
           <div><small>CONTADOS</small><b id="counted">0</b><em>unidades</em></div>
           <div><small>HALLAZGOS</small><b id="findings">0</b><em>diferencias</em></div>
