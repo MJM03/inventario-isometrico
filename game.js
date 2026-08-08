@@ -15,7 +15,7 @@ const state={area:null,skills:{speed:0,accuracy:0,focus:0},points:5,running:fals
 const $=s=>document.querySelector(s);
 
 function renderAreas(){
-  $('#areas').innerHTML=AREAS.map(a=>`<button class="area ${state.area?.id===a.id?'selected':''}" data-id="${a.id}" style="--area:${a.color}"><i>${a.icon}</i><span>${a.name}<small>${a.items} SKUs</small></span><b>✓</b></button>`).join('');
+  $('#areas').innerHTML=AREAS.map(a=>`<button class="area ${state.area?.id===a.id?'selected':''}" data-id="${a.id}" style="--area:${a.color}"><div class="area-icon"><i>${a.icon}</i></div><span>${a.name}<small>${a.items} SKUs</small></span><b>✓</b></button>`).join('');
   document.querySelectorAll('.area').forEach(btn=>btn.onclick=()=>{state.area=AREAS.find(a=>a.id===btn.dataset.id);renderAreas();updateStart()});
 }
 function renderSkills(){
@@ -28,7 +28,7 @@ function renderTasks(){
   $('#tasks').innerHTML=state.area.tasks.map((t,i)=>`<div class="task ${i<state.task?'done':i===state.task?'active':''}"><span>${i<state.task?'✓':String(i+1).padStart(2,'0')}</span><div><b>${t}</b><small>${i<state.task?'Conteo completado':i===state.task?'Contando productos…':'Pendiente'}</small></div>${i===state.task?'<i></i>':''}</div>`).join('');
 }
 function start(){
-  state.running=true;$('#setupPanel').classList.add('hidden');$('#runPanel').classList.remove('hidden');$('#areaBadge').textContent=state.area.name.toUpperCase();$('#areaBadge').style.background=state.area.color;$('#routeTitle').textContent=state.area.name;$('#statusLabel').textContent='AUDITOR TRABAJANDO';$('#statusDot').classList.add('on');$('#workerTag').textContent='CONTANDO';updateETA();renderTasks();tick();
+  state.running=true;$('#setupPanel').classList.add('hidden');$('#runPanel').classList.remove('hidden');$('#areaBadge').innerHTML=`<i>${state.area.icon}</i>${state.area.name.toUpperCase()}`;$('#areaBadge').style.setProperty('--badge',state.area.color);$('#world').style.setProperty('--accent',state.area.color);$('#routeTitle').textContent=state.area.name;$('#statusLabel').textContent='AUDITOR TRABAJANDO';$('#statusDot').classList.add('on');$('#workerTag').textContent='CONTANDO';updateETA();renderTasks();tick();
 }
 function tick(){
   clearTimeout(state.timer);if(!state.running)return;
